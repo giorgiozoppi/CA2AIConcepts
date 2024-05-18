@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "ca2aiconcepts"
+version = "0.1.0"
+description = "CA2 Concepts AI"
+authors = ["Giorgio Zoppi <giorgio.zoppi@yenflow.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+ortools = "^9.10.4067"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
