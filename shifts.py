@@ -16,7 +16,7 @@ def main():
                         'Gavin':(13, 17),
                         'Tanya':(9, 15)}
     
-    num_days = 3
+    num_days = 4
     hours_per_day = 9
     
     # Create shift variables
@@ -33,18 +33,22 @@ def main():
         for hour in range(hours_per_day):
             model.add_exactly_one(shifts[(day, hour, s)] for s in range(len(staff)))
     
-     # Staff members should not work consecutive hours
-    for s in range(len(staff)):
-        for day in range(num_days):
-            for hour in range(hours_per_day - 1):
-                model.add_implication(shifts[(day, hour, s)], shifts[(day, hour + 1, s)].Not())
-
     # Everyone should work.
+    
     for s in range(len(staff)):
         for day in range(num_days):
             model.add(sum(shifts[(day, hour, s)] for hour in range(hours_per_day)) >= 1)
 
+    for staff_index in  range(len(staff)):
+         anne_index = staff.index('Anne')
+         if anne_index != staff_index:
+            for day in range(num_days):
+                 model.add_at_most_one(shifts[(day,hour,staff_index)] for hour in range(hours_per_day))
     
+    anne_index = staff.index('Anne')
+    for day in range(num_days):
+        model.add(sum(shifts[(day, hour, anne_index)] for hour in range(hours_per_day)) <= 2)
+        model.add(shifts[(day, mapped_hours[15], anne_index)] == 1)  #
     # Each staff member can only work within their available times
     for name in staff:
         staff_index = staff.index(name)
@@ -54,24 +58,6 @@ def main():
                 end = staff_time_slots[name][1]
                 if hour < mapped_hours[start] or hour >= mapped_hours[end]:  
                     model.add(shifts[(day, hour, staff_index)] == 0)
-    
-    min_shifts_per_receptionist = (hours_per_day * num_days) // len(staff)
-    if hours_per_day * num_days % len(staff) == 0:
-        max_shifts_per_receptionist = min_shifts_per_receptionist
-    else:
-        max_shifts_per_receptionist = min_shifts_per_receptionist + 1
-    
-    # anne is the only one available for the last shift each day
-
-    for s in range(len(staff)):
-        shifts_worked = []
-        for d in range(num_days):
-            for h in range(hours_per_day):
-                if s != staff.index('Anne'):
-                    shifts_worked.append(shifts[(d,h,s)])
-        if s != staff.index('Anne'):
-            model.add(min_shifts_per_receptionist <= sum(shifts_worked))
-            model.add(sum(shifts_worked) <= max_shifts_per_receptionist)
     
     # Solve the model
     solver = cp_model.CpSolver()
@@ -103,7 +89,7 @@ def main():
                                 print(f'  Hour {hour + 9}:00 - {self._staff[s]}')
 
     # Create the solution printer and solve
-    solution_limit = 5000 # print up to 
+    solution_limit = 5 # print up to 
     solution_printer = ReceptionistShiftPrinter(shifts, num_days, hours_per_day, staff, solution_limit)
     solver.solve(model, solution_printer)
     print(solution_printer._solution_count)
