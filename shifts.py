@@ -38,17 +38,38 @@ def main():
     for s in range(len(staff)):
         for day in range(num_days):
             model.add(sum(shifts[(day, hour, s)] for hour in range(hours_per_day)) >= 1)
-
+    
+    # every people except anne should work at most 1h.
+    # because Anne is the only one to have the last shift.
+    anne_index = staff.index('Anne')
+    gavin_index = staff.index('Gavin')
     for staff_index in  range(len(staff)):
-         anne_index = staff.index('Anne')
-         if anne_index != staff_index:
+         if anne_index != staff_index and gavin_index != staff_index:
             for day in range(num_days):
                  model.add_at_most_one(shifts[(day,hour,staff_index)] for hour in range(hours_per_day))
-    
-    anne_index = staff.index('Anne')
+    # We pin anne slot
     for day in range(num_days):
         model.add(sum(shifts[(day, hour, anne_index)] for hour in range(hours_per_day)) <= 2)
-        model.add(shifts[(day, mapped_hours[15], anne_index)] == 1)  #
+        model.add(sum(shifts[(day, hour, gavin_index)] for hour in range(hours_per_day)) <= 2)
+        
+        if day == 0:
+            model.add(shifts[(day, mapped_hours[15], anne_index)] == 1) 
+            model.add(shifts[(day, mapped_hours[16], gavin_index)] == 1)
+            model.add(shifts[(day, mapped_hours[17], anne_index)] == 1)
+        elif day == 1:
+            model.add(shifts[(day, mapped_hours[15], gavin_index)] == 1) 
+            model.add(shifts[(day, mapped_hours[16], gavin_index)] == 1)
+            model.add(shifts[(day, mapped_hours[17], anne_index)] == 1)
+        elif day == 2:
+            model.add(shifts[(day, mapped_hours[15], gavin_index)] == 1) 
+            model.add(shifts[(day, mapped_hours[16], anne_index)] == 1)
+            model.add(shifts[(day, mapped_hours[17], anne_index)] == 1)
+        elif day == 3:
+            model.add(shifts[(day, mapped_hours[15], gavin_index)] == 1) 
+            model.add(shifts[(day, mapped_hours[16], gavin_index)] == 1)
+            model.add(shifts[(day, mapped_hours[17], anne_index)] == 1)
+         
+
     # Each staff member can only work within their available times
     for name in staff:
         staff_index = staff.index(name)
@@ -89,10 +110,10 @@ def main():
                                 print(f'  Hour {hour + 9}:00 - {self._staff[s]}')
 
     # Create the solution printer and solve
-    solution_limit = 5 # print up to 
+    solution_limit = 20 # print up to 
     solution_printer = ReceptionistShiftPrinter(shifts, num_days, hours_per_day, staff, solution_limit)
     solver.solve(model, solution_printer)
-    print(solution_printer._solution_count)
+    print(f"Total solution: {solution_printer._solution_count}")
     
 
 if __name__ == '__main__':
